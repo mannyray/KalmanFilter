@@ -12,6 +12,7 @@ We will first discuss the `matlab_implementation` since it has the _meat_ of the
 	4. [`discrete_discrete`](#dd)
 	5. [`unscented`](#ukf)
 	6. [`ensemble_stochastic`](#enkf_stochastic)
+	7. [`particle_filter`](#particle_filter)
 2. [`c++_implementation`](#c++_imp)
 3. Testing
 4. Further reading
@@ -558,6 +559,28 @@ All of this code can be used in Octave (except `steady_state`)
   ```
   Maybe you can help implement this one :)
   ```
+
+* **`particle_filter`**<a name="particle_filter"></a> : 
+  Run the code in `discrete_discrete` for the `%LINEAR_EXAMPLE` and then the following:
+  ```
+  addpath('path_to/matlab_implementation/particle')
+  format long;
+  particle_count = 10000; 
+  particle = mvnrnd(x_0,P_0,particle_count)'; 
+  [estimates_particle, covariances_particle] = particle_filter(func,jacobian_func,dt,t_start,state_count,sensor_count,...
+  	outputs,particle_count,particle,C,chol(Q_d)',chol(R_d)',chol(P_0)',x_0, measurements);
+  covariances{end}
+  ```
+  We get the output:
+  ```
+  ans =
+
+   1.0e-06 *
+
+   0.504095891628774   0.021699909717188
+   0.021699909717188   0.487979914328156
+  ```
+  which is once again similar to previous results. Note that particle count is not as big as it was for the ensemble as computation is significantly slower. It is not recommented to run with 10000 particle count without running a `parfor` loop of sorts.
   
 
 ### 2. `c++_implementation` <a name="c++_imp"></a> 
