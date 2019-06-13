@@ -561,27 +561,82 @@ All of this code can be used in Octave (except `steady_state`)
   ```
 
 * **`particle_filter`**<a name="particle_filter"></a> : 
-  Run the code in `discrete_discrete` for the `%LINEAR_EXAMPLE` and then the following:
+  Run the code in `discrete_discrete` for the `%LINEAR_EXAMPLE` and then comment out within `particle_filter`:
+  ```
+  particle_new = zeros(state_count,particle_count);
+  particle_covariance_new = cell(state_count,1);
+  for weight_index=1:particle_count
+  	chosen_index = (find( cumulitive_profile >= rand,1));
+  	particle_new(:,weight_index) = particle(:,chosen_index);
+  	particle_covariance_new{weight_index} = particle_covariance{chosen_index};
+  end
+  particle_weight = (1/particle_count).*ones(particle_count,1);
+  particle = particle_new;
+  particle_covariance = particle_covariance_new;
+  ``` 
+  and then the following:
   ```
   addpath('path_to/matlab_implementation/particle')
   format long;
-  particle_count = 10000; 
+  particle_count = 30000; 
   particle = mvnrnd(x_0,P_0,particle_count)'; 
   [estimates_particle, covariances_particle] = particle_filter(func,jacobian_func,dt,t_start,state_count,sensor_count,...
   	outputs,particle_count,particle,C,chol(Q_d)',chol(R_d)',chol(P_0)',x_0, measurements);
-  covariances{end}
+  covariances_particle{end}
   ```
   We get the output:
   ```
   ans =
 
    1.0e-06 *
-
-   0.504095891628774   0.021699909717188
-   0.021699909717188   0.487979914328156
+   
+   0.500629318705446   0.027198397130451
+   0.027198397130451   0.497516844921370
   ```
-  which is once again similar to previous results. Note that particle count is not as big as it was for the ensemble as computation is significantly slower. It is not recommented to run with 10000 particle count without running a `parfor` loop of sorts.
+  which is once again similar to previous results. Note that particle count is not as big as it was for the ensemble as computation is significantly slower. It is not recommented to run with this particle count without running a `parfor` loop of sorts within the particle filter(and having good computational resources).
   
+  We can modify `path_to/matlab_implementation/particle/particle_filter.m` by uncommenting the following lines:
+  ```
+  %%%particles = cell(measurement_count+1,1);
+  %%%particles{k} = particle;
+  ```
+  and change the function header to have two additional outputs:
+  ```
+  function [estimates, covariances, particles] = ...
+  ```
+  This gives the ability to view the particles used in the filter in more detail. We will use the nonlinear population model from before meaning that the code in `discrete_discrete` must be rerun (the logistic growth section). Now run:
+  ```
+  particle_count = 30; 
+  particle1 = mvnrnd(x_0-15,P_0,particle_count/2)';
+  particle2 = mvnrnd(x_0+15,P_0,particle_count/2)';
+  particle = [particle1,particle2];
+  [estimates_particle, covariances_particle, particles] = particle_filter(next_func,jacobian_func,dt,t_start,state_count,sensor_count,...
+	outputs,particle_count,particle,C,chol(Q_d)',chol(R_d)',chol(P_0)',x_0, measurements);
+  ```
+  In the example we split the particles into two sets both with mean 15 away from true mean x_0 (in order to test the filter). Let's see the results:
+  ```
+  h = figure;
+  hold on;
+  lim = 975;
+  plot(0:dt:(outputs-lim-1)*dt,measurements(1:end-lim),'LineWidth',3); 
+  plot(0:dt:(outputs-lim-1)*dt,process_noise_data(1:end-lim),'LineWidth',3);
+  plot(0:dt:(outputs-lim-1)*dt,estimates_particle(1:end-lim-1),'LineWidth',3);
+  
+  for ii=1:(outputs-lim)
+  	[xUnique, ignore, ixs] = unique(particles{ii});
+  	counts = zeros(size(xUnique,1),1);
+  	for ix = 1:size(counts,1);
+  		counts(ix) = sum(ixs == ix);
+  	end
+  	scatter(dt*(ii-1)*ones(length(xUnique),1),xUnique,counts*20,'g','filled');
+  end
+  legend('Measurement','Real data','Estimate');
+  xlabel('Time')
+  ylabel('Population')
+  ```
+  <img src="assets/sample_particle1.png" alt="drawing" /> 
+  The green dots represent the particles were the thicker dots are where the particles have a higher frequence. The particle filter recovers quickly from the incorrect guess.
+
 
 ### 2. `c++_implementation` <a name="c++_imp"></a> 
 

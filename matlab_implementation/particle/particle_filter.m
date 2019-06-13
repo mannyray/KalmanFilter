@@ -85,7 +85,7 @@ assert(size(particle,1)==state_count&&...
 
 estimates = zeros(state_count,measurement_count+1);
 covariances = cell(measurement_count+1,1);
-particle_covariance = cell(particle_count,1);
+%%%particles = cell(measurement_count+1,1);
 %covariance is set to be the same for all initial particles
 for particle_index=1:particle_count
 	particle_covariance{particle_index} = P_0_root*P_0_root';
@@ -94,9 +94,11 @@ end
 particle_weight = (1/particle_count).*ones(particle_count,1);
 
 estimates(:,1) = x_0;
-covariances{1} = P_0_root*P_0_root';
+covariances{1} = P_0_root*P_0_root'; 
 
 for k=1:measurement_count
+	%%%particles{k} = particle;
+
 	%project EKF in each particle i
 	%this (of course) can be parallelized as other for loops here can too
 	for particle_index=1:particle_count
@@ -109,10 +111,9 @@ for k=1:measurement_count
 
 	%update EKF in each particle i
 	for particle_index=1:particle_count
-		[covariance_sqrt] = update_phase(R_root,particle_covariance{particle_index},C,particle(:,particle_index),measurements(k));	
+		[estimate, covariance_sqrt] = update_phase(R_root,particle_covariance{particle_index},C,particle(:,particle_index),measurements(k));	
 
-		particle(:,particle_index) = estimate;
-		particle_covariances{particle_index} = covariance_sqrt;
+		particle_covariance{particle_index} = covariance_sqrt;
 	end
 
 	%update particle weights
@@ -152,12 +153,14 @@ for k=1:measurement_count
 	%'gain' in the cdf plot and therefore chosen_index will more frequently
 	%select this particle and produce more particles in particle_new
 	%with uniform particle weight (1/particle_count).
+	%Can modify to do resampling less frequently.
+	
 	particle_new = zeros(state_count,particle_count); 
 	particle_covariance_new = cell(state_count,1);
 	for weight_index=1:particle_count
-		chosen_index = (find( cumulitive_profile > rand,1) - 1);
-		particle_new(:,weight_index) = particle(:,weight_index);
-		particle_covariance_new{weight_index} = particle_covariance{weight_index};
+		chosen_index = (find( cumulitive_profile >= rand,1));
+		particle_new(:,weight_index) = particle(:,chosen_index);
+		particle_covariance_new{weight_index} = particle_covariance{chosen_index};
 	end
 	particle_weight = (1/particle_count).*ones(particle_count,1);
 	particle = particle_new;

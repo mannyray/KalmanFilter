@@ -1,4 +1,4 @@
-function [covariance_sqrt] = update_phase(R_root,P_root,C,estimate,measurement)
+function [estimate_next, covariance_sqrt] = update_phase(R_root,P_root,C,estimate,measurement)
 %runs update portion of the EKF
 %[estimate_next,covariance_sqrt] = ddekf_update_phase(R_root,P_root,C,estimate,measurement)
 %INPUT:
@@ -33,6 +33,8 @@ function [covariance_sqrt] = update_phase(R_root,P_root,C,estimate,measurement)
 	X = R(1:measurement_count,1:measurement_count); 
 	Y = R((1+measurement_count):end,(1:measurement_count));
 	Z = R((1+measurement_count):end,(1+measurement_count):end);
-	
+
+	%Kalman_gain = Y*inv(X);
+	estimate_next = estimate + Y*(X\(measurement - C*estimate));
 	covariance_sqrt = Z;
 end
