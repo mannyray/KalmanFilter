@@ -1,234 +1,219 @@
 #ifndef KALMANFILTER_H
 #define KALMANFILTER_H
 
-#include <Eigen/Dense>
-#include <Eigen/Core>
-#include <assert.h>
-#include <fstream>
-#include <sstream>
-#include <string>
+#include "model.h"
+#include "filterModel.h"
+#include <iostream>
 
-
+/*
+ * Abstract class KalmanFilter that describes a general Kalman filter 
+ * with its properties. Any kalman filter has a filterModel that describes
+ * the model. The protected methods are the interface layer between the 
+ * filterModel and KalmanFilter subclasses such as discreteDiscreteKalmanFilter.
+ * The public getter methods are for the subclass users. The pure virtual methods
+ * are the predict and update phase as that depends on the specific filter type.
+ */
+template<class VECTOR,class MATRIX, class T1>
 class KalmanFilter{
+
+	filterModel<VECTOR,MATRIX,T1> *model;
+
+	T1 currentTime;
+
+	VECTOR currentEstimate;
+	MATRIX currentCovariance;
+	
 	protected:
-		//length of state vector
-		int state_count;
 
-		//length of measurement vector
-		int sensor_count;
-
-		//the amount of total observations
-		int observation_count;
-
-		//the time difference between each observation
-		double dt_between_observations;
-
-		//current time. Assuming that first observation is at time 0.
-		double current_time = 0;
-
-		//initial state. Dimension: 'state_count'X1
-		Eigen::VectorXd x_0;	
-
-		//initial covariance. Dimension: 'state_count'X'state_count'	
-		Eigen::MatrixXd P_0;
-	
-		//current covariance matrix P
-		Eigen::MatrixXd P;
-	
-		//current estimate of state x
-		Eigen::VectorXd x;
-
-		//the observations themselves. There are 'observation_count' observations
-		//and 'sensor_count' the amount of measurements coming in with each observation.
-		//Therefore the required dimension of measurements is 
-		//'sensor_count'X'observation_count'
-		Eigen::MatrixXd measurements;
-
-		//the matrix that converts state to measurement.
-		//Dimensions: 'sensor_count'X'state_count'
-		Eigen::MatrixXd observation_matrix;
-
-		//the filtered data.
-		//Dimensions:'state_count'X'observation_count'
-		//the nth column represents the estimated state
-		//at t=dt_between*(measurements - 1);
-		Eigen::MatrixXd filtered_data;
-
-		//If set to true, covariances is filled with computed covariances.
-		//For large state count this takes up a lot of memory which is why
-		//it is set to zero.
-		bool saveCovariances = false;
-
-		//The computed covariances matrices. (array of matrices)
-		Eigen::MatrixXd ** covariances;
-		
-		//The traces of the covariances
-		Eigen::MatrixXd traces;
-
-		//process covariance matrix Q  
-		//Dimension: 'state_count'X'state_count'
-		Eigen::MatrixXd Q;
-
-		//sensor covariance matrix R
-		//Dimension: 'sensor_count'X'sensor_count'
-		Eigen::MatrixXd R;
-
-		//output format of the data saved to file - set in the constructor
-		//to CSV format. This is not an efficient storage format 
-		//as a double now is written with all the digits in ascii form.
-		Eigen::IOFormat CSVFormat;	
-	
-		void writeToCSVfile(std::string name, Eigen::MatrixXd & matrix){
-			std::ofstream file(name.c_str(),std::fstream::app);
-			file << matrix.transpose().format(CSVFormat)<<std::endl;
-		}
-		
-		void writeToCSVfile(std::string name, Eigen::MatrixXd * matrix){
-			std::ofstream file(name.c_str(),std::fstream::app);
-			file << matrix->format(CSVFormat)<<std::endl;
-		}
-	protected:
-		//return covariance P. For square root implementatios the implementation
-		//of the function will change
-		virtual Eigen::MatrixXd getP(){
-			return P;
+		int getStateCount(){
+			return model->getStateCount();
 		}
 
-		//The following two methods are very specific for a general 
-		//Kalman filter class such as this and can be moved to a more specific
-		//sub class from which discreteDiscreteExtendedKalmanFilter
-		//and continuousDiscreteExtendedKalmanFilter could inherit from
-		//(instead of inheriting from this one). However, this was not done
-		//in this case which technically goes against the purest forms of OOP
-		//spirits.
-
-		//Lower triangulate matrix 'in' using Householder algorithm.
-		//Similar to a QR transform: A = QR (Q unitary, R is uppertriangular)
-		void lower_triangulate(Eigen::MatrixXd &in){
-			Eigen::VectorXd v; 
-			Eigen::VectorXd w; 
-			for(int i = 0; i < in.rows(); i++){
-				int length = in.cols() - i;
-				v = in.row(i).tail(length);
-				double mew = v.norm();
-				if(mew!=0){//(-2*(v(0) < 0)+1) sign of v(0)
-					double beta  = v(0)  + (-2*(v(0) < 0)+1)*mew;	
-					v = v/beta;
-				}
-				v(0) = 1;
-				w = -2.0/(v.squaredNorm())*(in.block(i,i, in.rows()-i , in.cols()-i)*v);
-				in.block(i,i, in.rows()-i , in.cols()-i) = in.block(i,i, in.rows()-i , in.cols()-i) + w*v.transpose();
-			}
+		int getSensorCount(){
+			return model->getSensorCount();
 		}
 
-		//When adding two matrices that can be expressed as square roots:
-		//A = A1*(A1)^T
-		//B = A2*(A2)^T
-		//where ^T is the transpose, then the function add_roots(A1,A2) returns
-		//A3 such that
-		//A + B = A3*(A3)^T
-		Eigen::MatrixXd add_roots(Eigen::MatrixXd  A1, Eigen::MatrixXd  A2){
-			Eigen::MatrixXd tmp(state_count,state_count*2);
-			tmp.block(0,0,state_count,state_count) = A1;
-			tmp.block(0,state_count,state_count,state_count) = A2;
-			lower_triangulate(tmp);
-			return tmp.block(0,0,state_count,state_count);
+		MATRIX getTransitionJacobian(VECTOR v, T1 t){
+			return model->transitionJacobian(v,t);
+		}	
+
+		MATRIX getMeasurementJacobian(VECTOR v, T1 t){
+			return model->measurementJacobian(v,t);
+		}
+
+		VECTOR transition(VECTOR t, T1 time){
+			return model->transition(t,time);
+		}		
+
+		VECTOR measure(VECTOR t, T1 time){
+			return model->measurement(t,time);
+		}
+
+
+		void setCurrentCovariance(MATRIX t){
+			currentCovariance = t;
+		}
+
+		void setCurrentTime(T1 t){
+			currentTime=t;
+		}
+
+		void setCurrentEstimate(VECTOR t){
+			currentEstimate = t;
+		}
+
+		MATRIX getProcessNoiseCovariance(VECTOR v, T1 t){
+			return model->getProcessNoiseCovariance(v,t);
+		}
+
+		MATRIX getSensorNoiseCovariance(VECTOR v, T1 t){
+			return model->getSensorNoiseCovariance(v,t);			
+		}
+
+		MATRIX getProcessNoiseCovarianceSqrt(VECTOR v, T1 t){
+			return model->getProcessNoiseCovarianceSqrt(v,t);
+		}
+
+		MATRIX getSensorNoiseCovarianceSqrt(VECTOR v, T1 t){
+			return model->getSensorNoiseCovarianceSqrt(v,t);			
 		}
 
 	public:
-		//write computed data to file 
-		void saveData(std::string file_name){
-			if(saveCovariances == true){
-				std::stringstream ss2; ss2<<file_name<<"_covariance_traces.txt";
-				std::stringstream ss3; ss3<<file_name<<"_covariances.txt";
-				Eigen::MatrixXd tmp(observation_count,1);
-				for(int i = 0; i < observation_count; i++){
-					double trace = 0;
-					Eigen::MatrixXd tmpp = *(covariances[i]);
-					for(int j = 0; j < state_count; j++){
-						trace+=tmpp(j,j);
-					}
-					tmp(i,0) = trace; 
-					writeToCSVfile(ss3.str(),tmpp);
-				}	
-				writeToCSVfile(ss2.str(),tmp);
-			}else{
-				std::stringstream ss2; ss2<<file_name<<"_covariance_traces.txt";
-				writeToCSVfile(ss2.str(),traces);
-			}
-			std::stringstream ss1; ss1<<file_name<<"_filtered_data.txt";
-			writeToCSVfile(ss1.str(),filtered_data);
-		}
-		//Function f - the assumed model for the Kalman filter
-		//to be implemented in specific Kalman filter sub class
-		//depending on context
-		virtual Eigen::VectorXd f(Eigen::VectorXd x, double t) = 0;
-		
-		//Jacobian of f at state x at t
-		virtual Eigen::MatrixXd f_jacobian(Eigen::VectorXd x, double t) = 0;
 
-		//constructor
-		KalmanFilter(int state_count, int sensor_count, int observation_count, double dt_between_observations, Eigen::VectorXd X_0, Eigen::MatrixXd p_0, Eigen::MatrixXd measur, Eigen::MatrixXd obs_mat, Eigen::MatrixXd q, Eigen::MatrixXd r,bool saveCovariances = false):state_count(state_count),sensor_count(sensor_count),observation_count(observation_count),dt_between_observations(dt_between_observations),saveCovariances(saveCovariances){ 
-			//the format with which the data will be saved. It is not the most compact form as it prints
-			//out the entire number. This can be changed to something more compact.
-			CSVFormat = Eigen::IOFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", "\n");	
-			
-			measurements = measur;
-			x_0 = X_0;
-			P_0 = p_0; 
-			R = r;
-			Q = q;
-			observation_matrix = obs_mat;
-			P = P_0; x = x_0;
-			
-			//dimensions are checked. However, the semipositive definitness of P_0,Q,R are not checked
-			//this is up to the user.
-			assert(P_0.rows() == P_0.cols() && P_0.rows() == state_count &&
-				"covariance P has wrong dimensions");
-			assert(x_0.rows() == state_count && x_0.cols() == 1 &&
-				"state x has wrong dimensions");
-			assert(measurements.rows() == sensor_count && measurements.cols() == observation_count &&
-				"measurements has wrong dimension");
-			assert(observation_matrix.rows() == sensor_count && observation_matrix.cols() == state_count &&
-				"observation matrix has wrong dimensions"); 
-			assert(Q.rows() == Q.cols() && Q.rows() == state_count &&
-				"process noise matrix incorrect");
-			assert(R.rows() == R.cols() && R.rows() == sensor_count &&
-				"sensor noise matrix incorrect");
-			
-			//define data and space for its 
-			traces = Eigen::MatrixXd(observation_count,1);
-			filtered_data = Eigen::MatrixXd(state_count, observation_count);
-			if(saveCovariances==true){
-				covariances = new Eigen::MatrixXd*[observation_count];    
-				for(int i = 0; i < observation_count; i++){
-					covariances[i] = new Eigen::MatrixXd(state_count,state_count); 
-				}
-			}
+		MATRIX getCurrentCovariance(){
+			return currentCovariance;
+		}	
+		
+		VECTOR getCurrentEstimate(){
+			return currentEstimate;
 		}
 
-		//the predict and update phase defined in this class
-		//imply that all inheriting classes have measurements
-		//that are discrete in time.		
+		T1 getCurrentTime(){
+			return currentTime;
+		}
 
-		//the predict phase of the filter
-		virtual void predict() = 0;
+		KalmanFilter(
+			T1 initialTime,
+			VECTOR initialEstimate,
+			MATRIX initialCovariance,
+			filterModel<VECTOR,MATRIX,T1> *model):
+			model(model){
+				currentTime = initialTime;
+				currentEstimate = initialEstimate;
+				currentCovariance = initialCovariance;
+			};
 
-		//the update phase of the filter
-		virtual void update(int i) = 0;
+		virtual void predict(T1 timeUnitsForward) = 0;
+		virtual void update(VECTOR measurement) = 0;
+};
 
-		//filters through all the measurements and produces the 
-		//estimates and or covariances
-		virtual void filter() = 0;
-		
-		//destructor
-		~KalmanFilter(){
-			if(saveCovariances==true){
-				for(int i=0; i < observation_count;i++){
-					delete covariances[i];
-				}delete [] covariances;
-			}
+
+/*
+ * 
+ */
+template<class VECTOR, class MATRIX>
+class discreteDiscreteKalmanFilter: public KalmanFilter<VECTOR,MATRIX,int>{
+	using KF = KalmanFilter<VECTOR,MATRIX,int>;
+	
+	public:
+		discreteDiscreteKalmanFilter(
+			int initialTime,
+			VECTOR initialEstimate,
+			MATRIX initialCovariance,
+			filterModel<VECTOR,MATRIX,int> *model):
+			KF::KalmanFilter(initialTime,
+			initialEstimate,initialCovariance,model){}
+
+		void predict(int timeUnitsForward){//TODO - have to run things time steps forward
+			VECTOR est = KF::getCurrentEstimate();
+			int time = KF::getCurrentTime();  
+			MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
+			MATRIX covariance = KF::getCurrentCovariance();
+
+			KF::setCurrentEstimate(KF::transition(est,time));
+			KF::setCurrentCovariance(jacob*covariance*jacob.transpose() + KF::getProcessNoiseCovariance(est,time));
+			KF::setCurrentTime(time + 1);
+		}
+
+		void update(VECTOR measurement){
+			VECTOR est = KF::getCurrentEstimate();
+			MATRIX covariance = KF::getCurrentCovariance();
+			int time = KF::getCurrentTime();  
+			//TODO: prevent/fix inverse
+			MATRIX measurementJacobian = KF::getMeasurementJacobian(est,time);
+			MATRIX Sk = KF::getSensorNoiseCovariance(est,time) + measurementJacobian*covariance*measurementJacobian.transpose();
+			MATRIX KalmanGain = covariance*measurementJacobian.transpose()*Sk.inverse();
+			KF::setCurrentEstimate(est + KalmanGain*(measurement - KF::measure(est,time)));
+			KF::setCurrentCovariance((MATRIX::Identity(KF::getStateCount(),KF::getStateCount())-KalmanGain*measurementJacobian)*covariance);
 		}
 };
 
+
+template<class VECTOR, class MATRIX>
+class discreteDiscreteKalmanFilterSquareRoot: public KalmanFilter<VECTOR,MATRIX,int>{
+	using KF = KalmanFilter<VECTOR,MATRIX,int>;
+	
+	
+	MATRIX getCurrentCovariance(){
+		return currentCovarianceSQRT*currentCovarianceSQRT.transpose();
+	}	
+
+	private:
+		MATRIX currentCovarianceSQRT;
+
+		MATRIX getCurrentCovarianceSQRT(){
+			return currentCovarianceSQRT;
+		}
+
+	public:
+		discreteDiscreteKalmanFilterSquareRoot(
+			int initialTime,
+			VECTOR initialEstimate,
+			MATRIX initialCovariance,
+			filterModel<VECTOR,MATRIX,int> *model):
+			KF::KalmanFilter(initialTime,
+			initialEstimate,initialCovariance,model){
+				currentCovarianceSQRT = initialCovariance;
+				MATRIX::lowerTriangulate(currentCovarianceSQRT);
+			}
+
+		void predict(int timeUnitsForward){
+			int stateCount = KF::getStateCount();
+			int sensorCount = KF::getSensorCount();
+			VECTOR est = KF::getCurrentEstimate();
+			int time = KF::getCurrentTime();  
+			MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
+			MATRIX covarianceSQRT = getCurrentCovarianceSQRT();
+
+			MATRIX tmp(stateCount,stateCount*2);//TODO: empty constructor
+			tmp.block(0,0,stateCount,stateCount) = jacob*covarianceSQRT;
+			tmp.block(0,stateCount,stateCount,stateCount) = KF::getProcessNoiseCovarianceSqrt(est,time);
+
+			MATRIX::lowerTriangulate(tmp);
+
+			KF::setCurrentEstimate(KF::transition(est,time));
+			currentCovarianceSQRT = tmp.block(0,0,stateCount,stateCount);
+			KF::setCurrentTime(time + 1);
+		}
+
+		void update(VECTOR measurement){
+			int stateCount = KF::getStateCount();
+			int sensorCount = KF::getSensorCount();
+			VECTOR est = KF::getCurrentEstimate();
+			MATRIX covariance = KF::getCurrentCovariance();
+			int time = KF::getCurrentTime();  
+			MATRIX measurementJacobian = KF::getMeasurementJacobian(est,time);
+
+			MATRIX tmp(stateCount + sensorCount, stateCount + sensorCount);
+			tmp.block(0,0,sensorCount,sensorCount) = KF::getSensorNoiseCovarianceSqrt(est,time); 
+			tmp.block(0,sensorCount,sensorCount,stateCount) = measurementJacobian*currentCovarianceSQRT;
+			tmp.block(sensorCount,sensorCount,stateCount,stateCount) = currentCovarianceSQRT;
+
+			MATRIX::lowerTriangulate(tmp);
+			MATRIX tmp2 = tmp.block(0,0,sensorCount,sensorCount);
+			VECTOR ek = VECTOR::solve(tmp2,(measurement - KF::measure(est,time)));//TODO - is this correct?
+			KF::setCurrentEstimate(est+tmp.block(sensorCount,0,stateCount,sensorCount)*ek);
+			currentCovarianceSQRT = tmp.block(sensorCount,sensorCount,stateCount,stateCount);
+		}
+};
 #endif

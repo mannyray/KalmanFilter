@@ -640,60 +640,7 @@ All of this code can be used in Octave (except `steady_state`)
 
 ### 2. `c++_implementation` <a name="c++_imp"></a> 
 
-To run the `C++` code you will need the [Eigen library](https://eigen.tuxfamily.org/index.php?title=Main_Page) which is responsible for Matrix manipulations. Instructions to download the library and install can be easily found online (the code has been only testing in a Ubuntu environment). Two examples are provided to showcase how to use the code. In the previous section, discussing the matlab code, the code was 'verified' by comparing the steady state covariance matrix as well as general filter performance. In this section, the examples are used to show the equivalence between the matlab implementation and the `C++` implementation in terms of output. The only two implemented types of filter are the discrete-discrete and continuous-discrete extended Kalman filter. Both classes inherit from a superclass that describes a general Kalman filter containing a predict and update phase. The `KalmanFilter.h` superclass contains a few virtual functions some of which are
-```
-virtual void predict() = 0;
-virtual void update() = 0;
-virtual void filter() = 0;
-virtual Eigen::MatrixXd getP()
-```
-These functions are dependent on the filter type and are are implemented in the inheriting classes such as `continuousDiscreteExtendedKalmanFilter.h` and `discreteDiscreteExtendedKalmanFilter.h`. Other virtual methods such as
-```
-virtual Eigen::VectorXd f(Eigen::VectorXd x, double t) = 0;
-virtual Eigen::MatrixXd f_jacobian(Eigen::VectorXd x, double t) = 0;
-```
-are model specific and depend on the context. For continuous-discrete Extended Kalman filter, `f` is such that `(d/dt)x = f(x,t)` where `x` is the state and `t` is the current time. For discrete-discrete Extended Kalman filter, `f` is such that `x_{k+1} = f(x_{k},k)` where `k` is the time step. In `KalmanFilter/c++_implementation/test/sample_code2` there is a class `test` that inherits from `discreteDiscreteExtendedKalmanFilter` and implements `f` and `f_jacobian`. `f` and `f_jacobian` parameters are loaded in from `.txt` files that are created in `KalmanFilter/testing/testing_discreteDiscereteKalmanFilter/matlab_generate.m` where the specific details of `f`
-are found in 
-```
-next_func = @(x,t) x + A*x + 0.*t - [aa1*x(1)^2;aa2*x(2)^2];
-```
-The matlab script generates a bunch of `.txt` including system based matrices as well as the actual data to filter located in `measurements.txt`. Run the script and then 
-```
-$ cd KalmanFilter/c++_implementation
-```
-Open `Makefile` to edit. Make sure the `all:` line is set to 
-```
-all: setup sample_code2 
-```
-In addition, modify 
-```
-INC := -I include -I /usr/local/include/eigen3/
-```
-to point to the Eigen library. You can modify
-```
-CFLAGS := -std=c++11 -O2  # -Wall
-```
-to include additional flags and so forth. Once you are finished run
-```
-$ make 
-```
-in the same directory. This has compiled the `C++` code, moved the compiled code and all the `.txt` files created by `matlab_generate.m` script to `KalmanFilter/bin/sample_code2`. Move to that directory:
-```
-$ cd bin/sample_code2
-```
-and run the code 
-```
-./sample_code2
-```
-Now move the generated files to the matlab script location
-```
-cp output_data*.txt ../../../testing/testing_discreteDiscreteKalmanFilter
-```
-and `cd` to that same directory and run the matlab script `compare.m` to verify
-```
-c++ discrete discrete Kalman filter matches matlab implementation
-```
-The same message can be seen when running the same sequence of steps but for `sample_code`.
+Explanation and examples and documentation of the code can be found [here](https://szonov.com/kalmanfilter/cpp/index.html).
 
 ## 3. Sources
 

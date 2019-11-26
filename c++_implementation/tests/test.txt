@@ -1,0 +1,9 @@
+Hey everybody!
+
+CONTEXT (the info here is mainly irrelevant):
+______________________________________________________
+I am building a general Kalman filter library in `C++` while trying to keep things modular using classes and templates. The reason for templates is to allow for the user to use different libraries for representing the base vector/matrix data structures (Eigen library or maybe one's personal implementation) and inheritance to allow for different Kalman filters (discrete-discrete, continuous-discrete, continuous-continuos, square root, unscented....). The inspiration for this class is to review OOP, templates, and to create a nice public library.
+
+One of the classes part of the project is the `model` class with `continuousModel` and `discreteModel` as subclasses all with virtual functions which a user can specify in a specific model instances. For both classes there is a abstract `solver` class that in the continuous case allows for users to implement a specific `solver` class such as `solverRK4`. These solvers can be used to generated the real data and observations as well as for the internal Kalman filter operations.
+
+ 

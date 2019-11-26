@@ -1,2 +1,4 @@
-*.txt
-bin/*
+*.swp
+html/*
+latex/*
+*a.out
