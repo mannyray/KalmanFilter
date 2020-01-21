@@ -125,14 +125,17 @@ class discreteDiscreteKalmanFilter: public KalmanFilter<VECTOR,MATRIX,int>{
 			initialEstimate,initialCovariance,model){}
 
 		void predict(int timeUnitsForward){//TODO - have to run things time steps forward
-			VECTOR est = KF::getCurrentEstimate();
-			int time = KF::getCurrentTime();  
-			MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
-			MATRIX covariance = KF::getCurrentCovariance();
+			for(int i = 0; i < timeUnitsForward; i++){
+				VECTOR est = KF::getCurrentEstimate();
+				int time = KF::getCurrentTime();  
+				MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
+				MATRIX covariance = KF::getCurrentCovariance();
 
-			KF::setCurrentEstimate(KF::transition(est,time));
-			KF::setCurrentCovariance(jacob*covariance*jacob.transpose() + KF::getProcessNoiseCovariance(est,time));
-			KF::setCurrentTime(time + 1);
+				KF::setCurrentEstimate(KF::transition(est,time));
+				
+				KF::setCurrentCovariance(jacob*covariance*jacob.transpose() + KF::getProcessNoiseCovariance(est,time));
+				KF::setCurrentTime(time + 1);
+			}
 		}
 
 		void update(VECTOR measurement){
@@ -144,6 +147,8 @@ class discreteDiscreteKalmanFilter: public KalmanFilter<VECTOR,MATRIX,int>{
 			MATRIX Sk = KF::getSensorNoiseCovariance(est,time) + measurementJacobian*covariance*measurementJacobian.transpose();
 			MATRIX KalmanGain = covariance*measurementJacobian.transpose()*Sk.inverse();
 			KF::setCurrentEstimate(est + KalmanGain*(measurement - KF::measure(est,time)));
+
+
 			KF::setCurrentCovariance((MATRIX::Identity(KF::getStateCount(),KF::getStateCount())-KalmanGain*measurementJacobian)*covariance);
 		}
 };
@@ -154,9 +159,6 @@ class discreteDiscreteKalmanFilterSquareRoot: public KalmanFilter<VECTOR,MATRIX,
 	using KF = KalmanFilter<VECTOR,MATRIX,int>;
 	
 	
-	MATRIX getCurrentCovariance(){
-		return currentCovarianceSQRT*currentCovarianceSQRT.transpose();
-	}	
 
 	private:
 		MATRIX currentCovarianceSQRT;
@@ -166,6 +168,11 @@ class discreteDiscreteKalmanFilterSquareRoot: public KalmanFilter<VECTOR,MATRIX,
 		}
 
 	public:
+
+	MATRIX getCurrentCovariance(){
+		return currentCovarianceSQRT*currentCovarianceSQRT.transpose();
+	}	
+
 		discreteDiscreteKalmanFilterSquareRoot(
 			int initialTime,
 			VECTOR initialEstimate,
@@ -178,22 +185,24 @@ class discreteDiscreteKalmanFilterSquareRoot: public KalmanFilter<VECTOR,MATRIX,
 			}
 
 		void predict(int timeUnitsForward){
-			int stateCount = KF::getStateCount();
-			int sensorCount = KF::getSensorCount();
-			VECTOR est = KF::getCurrentEstimate();
-			int time = KF::getCurrentTime();  
-			MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
-			MATRIX covarianceSQRT = getCurrentCovarianceSQRT();
+			for(int i = 0; i < timeUnitsForward; i++){
+				int stateCount = KF::getStateCount();
+				int sensorCount = KF::getSensorCount();
+				VECTOR est = KF::getCurrentEstimate();
+				int time = KF::getCurrentTime();  
+				MATRIX jacob = KF::getTransitionJacobian(est,KF::getCurrentTime());
+				MATRIX covarianceSQRT = getCurrentCovarianceSQRT();
 
-			MATRIX tmp(stateCount,stateCount*2);//TODO: empty constructor
-			tmp.block(0,0,stateCount,stateCount) = jacob*covarianceSQRT;
-			tmp.block(0,stateCount,stateCount,stateCount) = KF::getProcessNoiseCovarianceSqrt(est,time);
+				MATRIX tmp(stateCount,stateCount*2);//TODO: empty constructor
+				tmp.block(0,0,stateCount,stateCount) = jacob*covarianceSQRT;
+				tmp.block(0,stateCount,stateCount,stateCount) = KF::getProcessNoiseCovarianceSqrt(est,time);
 
-			MATRIX::lowerTriangulate(tmp);
+				MATRIX::lowerTriangulate(tmp);
 
-			KF::setCurrentEstimate(KF::transition(est,time));
-			currentCovarianceSQRT = tmp.block(0,0,stateCount,stateCount);
-			KF::setCurrentTime(time + 1);
+				KF::setCurrentEstimate(KF::transition(est,time));
+				currentCovarianceSQRT = tmp.block(0,0,stateCount,stateCount);
+				KF::setCurrentTime(time + 1);
+			}
 		}
 
 		void update(VECTOR measurement){
