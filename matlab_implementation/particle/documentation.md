@@ -75,7 +75,7 @@ ylabel('Population')
 
 that produces
 
-<img src="../../particle/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/particle/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 The green dots represent the particles where the thicker dots are where the particles have a higher frequency. The particle filter recovers quickly from the incorrect guess. *Don't forget* to change back the changes you made in the `particle_filter.m` code.
 

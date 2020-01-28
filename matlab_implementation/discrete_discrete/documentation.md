@@ -128,10 +128,10 @@ ylabel('Population')
 
 to produce (in Octave)
 <!---![](../../discrete_discrete/examples/logistic1.png)--->
-<img src="../../discrete_discrete/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/discrete_discrete/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 
-<img src="../../discrete_discrete/examples/logistic2.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/discrete_discrete/examples/logistic2.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 
 ## Example 2

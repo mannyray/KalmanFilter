@@ -34,7 +34,7 @@ legend('Measurement','Real data','Estimate');
 xlabel('Time')
 ylabel('Population')
 ```
-<img src="../../ensemble_stochastic/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/ensemble_stochastic/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 
 

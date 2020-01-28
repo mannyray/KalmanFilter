@@ -6,6 +6,7 @@
     <tab type="user" visible="yes" url="md_discrete_discrete_documentation.html" title="DD-EKF"/>
     <tab type="user" visible="yes" url="md_continuous_discrete_documentation.html" title="CD-EKF"/>
     <tab type="user" visible="yes" url="md_unscented_documentation.html" title="UKF"/>
+    <tab type="user" visible="yes" url="md_cubature_documentation.html" title="Cubature"/>     
     <tab type="user" visible="yes" url="md_continuous_continuous_documentation.html" title="CC-KF"/>
     <tab type="user" visible="yes" url="md_steady_state_documentation.html" title="SS-KF"/>
     <tab type="user" visible="yes" url="md_particle_documentation.html" title="Particle"/>

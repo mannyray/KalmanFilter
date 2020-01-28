@@ -143,10 +143,10 @@ ylabel('Population')
 
 to produce
 <!---![](../../discrete_discrete/examples/logistic1.png)--->
-<img src="../../continuous_discrete/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/continuous_discrete/examples/logistic1.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 
-<img src="../../continuous_discrete/examples/logistic2.png" alt="drawing2" style="width:80%;max-width:600px;"/>
+<img src="assets/continuous_discrete/examples/logistic2.png" alt="drawing2" style="width:80%;max-width:600px;"/>
 
 ## Example 2
 
