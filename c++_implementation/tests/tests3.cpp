@@ -7,15 +7,9 @@
 #include "../include/mathWrapper/boost.h"
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-
-
-
 #include <math.h>
 #include "../include/Eigen.h" 
-
- 
 #include <iostream>
-
 
 TEST(discreteDiscreteKalmanFilter, test){
 	
@@ -37,9 +31,6 @@ TEST(discreteDiscreteKalmanFilter, test){
 
 	Eigen::VectorXd initialEstimateEigenSimple(1);initialEstimateEigenSimple<<1;	
 	Eigen::MatrixXd initialCovarianceEigenSimple(1,1);initialCovarianceEigenSimple<<1;
-
-
-
 
 	class stateModel: public discreteModel<vectorDouble>{
 		public:

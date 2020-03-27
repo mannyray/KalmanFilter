@@ -3,10 +3,8 @@
 #include "../include/mathWrapper/boost.h"
 #include "../include/Eigen.h"
 #include "../include/mathWrapper/eigen.h"
-
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-
 
 #include <iostream>
 
@@ -27,16 +25,16 @@ TEST(discreteDiscreteKalmanFilter, test){
 	cholCov2(0,0)=1;cholCov2(0,1)=0.2;cholCov2(1,0)=0.0;cholCov2(1,1)=1.4;
 	matrixEigen cholCov3(cholCov);vectorEigen mean3(mean1);
 	for(int i = 0; i < totalCount; i++){
-		vectorDouble vdR = vectorDouble::randomVector(1);
+		vectorDouble vdR = vectorDouble::randomVector(1,i*i);
 		vdR_arr[i] = vdR*matrixDouble(0.1) + vectorDouble(5.0);
 
-		Eigen::VectorXd vesR = Eigen::VectorXd::randomVector(2); 
+		Eigen::VectorXd vesR = Eigen::VectorXd::randomVector(2,i*i); 
 		vesR_arr[i] = cholCov*vesR + mean1;
 
-		vectorBoost vbR = vectorBoost::randomVector(2);
+		vectorBoost vbR = vectorBoost::randomVector(2,i*i);
 		vbR_arr[i] = matrixBoost(cholCov2)*vbR + mean2;
 	
-		vectorEigen veR = vectorEigen::randomVector(2);
+		vectorEigen veR = vectorEigen::randomVector(2,i*i);
 		veR_arr[i] = cholCov3*veR + mean3;
 	}
 	
@@ -61,10 +59,6 @@ TEST(discreteDiscreteKalmanFilter, test){
 	}
 	vdCovariance = vdCovariance/totalCount;
 	ASSERT_NEAR(vdCovariance/0.01,1,0.01);
-
-
-
-
 }
 
 int main(int argc, char **argv){

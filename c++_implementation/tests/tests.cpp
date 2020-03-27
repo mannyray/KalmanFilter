@@ -47,9 +47,6 @@ TEST(continuousSolverRK4, RK4Test){
 	ASSERT_THROW(testModelSolver.solve(-1),std::out_of_range);
 }
 
-
-
-
 //CUSTOM VECTOR CLASS	
 class customVector{
 	private:
@@ -85,8 +82,6 @@ class customVector{
 			}
 			entries = std::vector<double>(size);
 		}
-		
-
 };
 
 
@@ -186,7 +181,6 @@ TEST(continuousSolverRK4,differentLibraryTest){
 		ASSERT_NEAR(testModelSolver.getCurrentState().getValueAtIndex(1),tmp4,1e-9);
 	}
 	ASSERT_THROW(testModelSolver.solve(-1),std::out_of_range);
-	
 }
 
 int main(int argc, char **argv){

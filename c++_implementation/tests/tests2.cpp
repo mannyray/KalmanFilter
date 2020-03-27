@@ -9,8 +9,6 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/operators.hpp>
-
- 
 #include <iostream>
 
 
@@ -89,8 +87,6 @@ TEST(discreteDiscreteKalmanFilter, test){
 		filter.predict(1);
 	}
 
-
-
 	for(int i = 0; i < 10; i++){
 		vectorDouble measurement(i);	
 		
@@ -98,15 +94,12 @@ TEST(discreteDiscreteKalmanFilter, test){
 		double kk = filter.getCurrentCovariance().getSystemValue()*(1.0/sk);
 		double curEst = filter.getCurrentEstimate().getSystemValue(); 
 
-
 		filter.update(measurement);
 		
-
 		ASSERT_NEAR(filter.getCurrentEstimate().getSystemValue(),curEst+kk*(double(i) - curEst),1e-9);
 		//ASSERT_NEAR(filter.getCurrentCovariance().getSystemValue(),1+0.01*i,1e-9);
 		//ASSERT_NEAR(filter.getCurrentTime(),i,1e-9);
 	}
-
 }
 
 int main(int argc, char **argv){
