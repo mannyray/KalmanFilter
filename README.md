@@ -4,8 +4,8 @@
 
 The `Matlab` and `C++` code are featured in the `matlab_implementation` and `c++_implementation` respectively. The code is **well documented**:
 
- - [Matlab documentation](https://szonov.com/kalmanfilter/matlab)
- - [C++ documentation](https://szonov.com/kalmanfilter/cpp)
+ - [Matlab documentation](http://kalmanfilter.org/matlab/index.html)
+ - [C++ documentation](http://kalmanfilter.org/cpp/index.html)
 
 
 ### Introduction
