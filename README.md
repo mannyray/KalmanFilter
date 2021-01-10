@@ -6,11 +6,12 @@ The `Matlab` and `C++` code are featured in the `matlab_implementation` and `c++
 
  - [Matlab documentation](http://kalmanfilter.org/matlab/index.html)
  - [C++ documentation](http://kalmanfilter.org/cpp/index.html)
+ - [Python documentation](http://kalmanfilter.org/python/index.html)
 
 
 ### Introduction
 
-This repository contains `Matlab` and `C++` implementations of different Kalman filters. The insipiration to create this repository is rlabbe's github [repository](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python) which is a great introduction to the Kalman filter in `python`. Go there first if you need a solid introduction the filter that will provide you with intuition behind its mechanics. 
+This repository contains `Matlab`, `C++` and `Python` implementations of different Kalman filters. The insipiration to create this repository is rlabbe's github [repository](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python) which is a great introduction to the Kalman filter in `python`. Go there first if you need a solid introduction the filter that will provide you with intuition behind its mechanics. 
 
 
 This repository aims to provide users a basic and ready to use arsenal to use in exploring filtering. I spent some time working with the Kalman Filter as part of my [thesis](https://uwspace.uwaterloo.ca/bitstream/handle/10012/14740/Zonov_Stanislav.pdf ) (see chapter 3) where I coded up continuous-discrete extended Kalman filter and discrete-discrete extended Kalman filter. After coding up the two filters, I decided to keep things interesting and added other filters as well (_UKF_,_Ensemble_,_Particle_). In order to test my implementations, I used the filters in various contexts as well as checked if the steady state covariances match as explained in [1].
