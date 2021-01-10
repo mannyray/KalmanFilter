@@ -30,3 +30,17 @@ doxygen Doxyfile
 mv html ../documentation/cpp
 cp assets/*.png ../documentation/cpp
 cd ..
+
+
+cd python_implementation
+cd discrete_discrete
+rm -rf html/*
+rm -rf latex/*
+rmdir html
+rmdir latex
+doxygen Doxyfile
+mv html ../../documentation/python
+cp examples/*.png ../../documentation/python/
+rm -rf latex/*
+rmdir latex
+cd ../..
