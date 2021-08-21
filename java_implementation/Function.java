@@ -7,5 +7,4 @@ public class Function{
         public Matrix jacobian(Matrix x, double time){
                 return Matrix.zero(1,1);
         }
-
 }

@@ -44,3 +44,18 @@ cp examples/*.png ../../documentation/python/
 rm -rf latex/*
 rmdir latex
 cd ../..
+
+pwd
+cd java_implementation
+rm -rf html/*
+rm -rf latex/*
+rmdir html
+rmdir latex
+pwd
+doxygen Doxyfile
+mv html ../documentation/java
+cp examples/*.png ../documentation/java/
+rm -rf latex/*
+rmdir latex
+cd ../..
+

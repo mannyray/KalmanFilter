@@ -3,7 +3,7 @@ import java.util.*;
 
 public class KalmanFilter{
 	
-	public Matrix[] predictPhase( Function f, double time,  Matrix P_0_sqrt, Matrix x, Matrix Q_root){
+	public static Matrix[] predictPhase( Function f, double time,  Matrix P_0_sqrt, Matrix x, Matrix Q_root){
 		int state_count = x.rowCount();
 		Matrix estimate = f.next(x,time);
 		Matrix jacobian = f.jacobian(x,time);
@@ -25,7 +25,7 @@ public class KalmanFilter{
 		return result;
 	}
 
-	public Matrix[] updatePhase( Matrix R_root, Matrix P_root, Matrix C, Matrix estimate, Matrix measurement){
+	public static Matrix[] updatePhase( Matrix R_root, Matrix P_root, Matrix C, Matrix estimate, Matrix measurement){
 		int measurement_count = C.rowCount();
 		int state_count = estimate.rowCount();
 
@@ -52,14 +52,14 @@ public class KalmanFilter{
 		return result;
 	}
 
-	public Matrix[][] ddekf( Function f, double dt_between_measurements, double start_time, int state_count, int sensor_count, int measurement_count, Matrix C, Matrix Q_root, Matrix R_root, Matrix P_0_root, Matrix x_0, Matrix[] measurements){
+	public static Matrix[][] ddekf( Function f, double dt_between_measurements, double start_time, int state_count, int sensor_count, int measurement_count, Matrix C, Matrix Q_root, Matrix R_root, Matrix P_0_root, Matrix x_0, Matrix[] measurements){
 		Matrix x_km1_p = x_0;
 		Matrix P_root_km1_p = P_0_root;
 
 		Matrix[] estimates = new Matrix[measurement_count+1];
 		Matrix[] covariances = new Matrix[measurement_count+1];
 
-		estimates[0] = x_km1_p;//TODO copy?
+		estimates[0] = x_km1_p;
 		covariances[0] = P_root_km1_p;
 
 		double current_time = start_time;
